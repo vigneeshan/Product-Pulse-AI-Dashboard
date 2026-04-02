@@ -1,0 +1,14 @@
+# Python Backend
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+productpulse.db
+
+# React Frontend
+node_modules/
+dist/
+.env
+.DS_Store
