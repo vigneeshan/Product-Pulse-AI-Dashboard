@@ -143,4 +143,36 @@ def add_product_and_analyze(product_data: ProductInput, db: Session = Depends(ge
     db.add(new_review)
     db.commit()
 
-    return {"message": "Product and AI Review added successfully!"}
+    # --- 4. NEW: Fetch & Save Competitor Price ---
+    try:
+        print(f"Searching market data for competitor to: {product_data.name}")
+        # Search the API using the first word of the product name
+        search_query = product_data.name.split()[0] 
+        search_url = f"https://dummyjson.com/products/search?q={search_query}"
+        response = requests.get(search_url, timeout=3)
+        data = response.json()
+        
+        if data['products']:
+            # If a match is found, grab the first competitor's name and price
+            comp_name = data['products'][0]['title']
+            comp_price = data['products'][0]['price']
+        else:
+            # If no match, use the math fallback
+            comp_name = "Generic Market Competitor"
+            comp_price = product_data.price * 0.90
+            
+    except Exception as e:
+        print(f"Market search failed. Using fallback. Error: {e}")
+        comp_name = "Generic Market Competitor"
+        comp_price = product_data.price * 0.90
+
+    # Explicitly save this to the competitor_prices database table!
+    new_comp_price = models.CompetitorPrice(
+        product_id=new_product.id,
+        competitor_name=comp_name,
+        competitor_price=comp_price
+    )
+    db.add(new_comp_price)
+    db.commit()
+
+    return {"message": "Product, AI Review, AND Competitor Price added successfully!"}
